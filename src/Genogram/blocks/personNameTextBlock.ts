@@ -9,7 +9,7 @@ const personNameTextBlock = () =>
     overflow: go.TextOverflow.Ellipsis,
     textAlign: "center",
     verticalAlignment: go.Spot.Center,
-    toolTip: (go.GraphObject.build("ToolTip") as unknown as { add: any }).add(
+    toolTip: new go.Adornment(go.Panel.Auto).add(
       new go.TextBlock({ margin: 4 }).bind("text", nameProperty)
     ),
     alignmentFocus: go.Spot.Top,

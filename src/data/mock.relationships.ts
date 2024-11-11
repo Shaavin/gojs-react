@@ -15,7 +15,13 @@ import takeN from "../utils/takeN";
 
 export function generateRandomRelationship(): Relationship {
   return {
-    status: takeN(Object.values(RelationshipStatus), 1)[0],
+    status:
+      Object.values(RelationshipStatus)[
+        faker.number.int({
+          min: 0,
+          max: Object.values(RelationshipStatus).length - 1,
+        })
+      ],
     strength: faker.number.int({ min: 1, max: 100 }),
     types: takeN(RelationshipTypeOptions as unknown as RelationshipType[], {
       min: 1,

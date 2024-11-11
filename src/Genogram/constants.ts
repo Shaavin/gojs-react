@@ -1,3 +1,4 @@
+// !TODO: Modify these if accessors in `people` array change
 export const nameProperty = "name";
 export const genderProperty = "gender";
 export const statusProperty = "status";

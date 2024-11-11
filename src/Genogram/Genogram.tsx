@@ -85,10 +85,10 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
     diagram.model.addNodeDataCollection(nodes);
 
     // Initially center on root
+    diagram.scale = 0.6;
     diagram.addDiagramListener("InitialLayoutCompleted", () => {
       const root = diagram.findNodeForKey(primaryClient.id);
       if (!root) return;
-      diagram.scale = 0.6;
       diagram.scrollToRect(root.actualBounds);
     });
 
@@ -113,9 +113,8 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
       people.map((person) => ({
         id: person.id,
         text: person.name,
-        color: person.id === primaryClient.id ? "lightblue" : "lightgreen",
       })),
-    [people, primaryClient.id]
+    [people]
   );
 
   const peopleLinkData = useMemo(
@@ -139,6 +138,7 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
     <ReactDiagram
       divClassName="diagram-component"
       initDiagram={initDiagram}
+      modelData={people}
       linkDataArray={peopleLinkData}
       nodeDataArray={peopleNodeData}
       style={{
