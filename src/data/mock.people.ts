@@ -1,17 +1,29 @@
 import { faker } from "@faker-js/faker";
 import { NUM_PEOPLE } from "./constants";
-import { Person } from "./types";
+import { GenderOptions, Person } from "./types";
 import { buildRelationships } from "./mock.relationships";
 
 export function generatePerson(
   id: number,
   ageRange: { min: number; max: number }
 ): Person {
+  const birthdate = faker.date.birthdate({ mode: "age", ...ageRange });
+  const gender = GenderOptions[faker.number.int({ min: 0, max: 2 })];
   return {
     id,
-    birthdate: faker.date.birthdate({ mode: "age", ...ageRange }),
-    name: `${faker.person.firstName()} ${faker.person.lastName()}`,
+    birthdate,
+    deathdate: faker.date.future({
+      refDate: birthdate,
+      years: faker.number.int({ min: 1, max: 30 }),
+    }),
+    gender,
+    name: `${faker.person.firstName(
+      gender === "other" ? undefined : gender
+    )} ${faker.person.lastName(gender === "other" ? undefined : gender)}`,
     relationships: buildRelationships(id),
+    status: ["king", "queen", "prince", "princess", "civilian"][
+      faker.number.int({ min: 0, max: 1 })
+    ],
   };
 }
 

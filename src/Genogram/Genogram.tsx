@@ -1,225 +1,150 @@
-import * as go from "gojs";
-
 import { ReactDiagram } from "gojs-react";
-import { Person } from "../data/types";
-import { useState } from "react";
+import { Person, PersonRelationships } from "../data/types";
+import * as go from "gojs";
+import { useMemo } from "react";
+import createNodeTemplate from "./templates/createNodeTemplate";
+import createLinkTemplate from "./templates/createLinkTemplate";
+import { statusProperty, STROKE_WIDTH, theme } from "./constants";
+
+const getStrokeForStatus = (status: string) => {
+  switch (status) {
+    case "king":
+    case "queen":
+      return theme.colors.kingQueenBorder;
+    case "prince":
+    case "princess":
+      return theme.colors.princePrincessBorder;
+    case "civilian":
+    default:
+      return theme.colors.civilianBorder;
+  }
+};
+
+const strokeStyle = (shape: go.Shape) =>
+  shape
+    .set({
+      fill: theme.colors.personNodeBackground,
+      strokeWidth: STROKE_WIDTH,
+    })
+    .bind("stroke", statusProperty, (status: string) =>
+      getStrokeForStatus(status)
+    )
+    .bindObject(
+      "stroke",
+      "isHighlighted",
+      (isHighlighted: boolean, obj: go.ObjectData) =>
+        isHighlighted
+          ? theme.colors.selectionStroke
+          : getStrokeForStatus(obj.part.data.status)
+    );
 
 export interface GenogramProps {
   people: Person[];
+  primaryClient: Person;
 }
 
-export default function Genogram({ people }: GenogramProps) {
-  const [nodeDataArray, setNodeDataArray] = useState<go.ObjectData[]>(
-    people.map((person) => ({ ...person }))
-  );
-  const [linkDataArray, setLinkDataArray] = useState<go.ObjectData[]>([]);
-  const [skipsDiagramUpdate, setSkipsDiagramUpdate] = useState<boolean>(false);
+export default function Genogram({ people, primaryClient }: GenogramProps) {
+  const onMouseEnterPart = (_: unknown, part: go.ObjectData) =>
+    (part.isHighlighted = true);
+  const onMouseLeavePart = (_: unknown, part: go.ObjectData) => {
+    if (!part.isSelected) part.isHighlighted = false;
+  };
+  const onSelectionChange = (part: go.ObjectData) => {
+    part.isHighlighted = part.isSelected;
+  };
 
-  // maps for faster state modification
-  const mapNodeKeyIdx = new Map();
-  const mapLinkKeyIdx = new Map();
-  refreshNodeIndex(nodeDataArray);
-  refreshLinkIndex(linkDataArray);
+  const initDiagram = () => {
+    // !TODO: Set license key
+    go.Diagram.licenseKey = "INVALID";
 
-  function initDiagram(): go.Diagram {
-    const diagram = new go.Diagram("genogramDiv", {
-      "undoManager.isEnabled": true, // must be set to allow for model change listening
-      "themeManager.changesDivBackground": true,
-      allowCopy: false,
-      allowDelete: false,
-      initialAutoScale: go.AutoScale.UniformToFill,
-      maxSelectionCount: 1, // user can select only one part at a time
-      validCycle: go.CycleMode.DestinationTree, // make sure users can only create trees
+    const diagram = new go.Diagram({
       layout: new go.TreeLayout({
-        treeStyle: go.TreeStyle.LastParents,
-        arrangement: go.TreeArrangement.Horizontal,
-        // Properties for most of the tree:
         angle: 90,
-        layerSpacing: 35,
-        // Properties for the "last parents":
+        nodeSpacing: 20,
+        layerSpacing: 50,
+        layerStyle: go.TreeLayout.LayerUniform,
+
+        // For compaction, make the last parents place their children in a bus
+        treeStyle: go.TreeStyle.LastParents,
         alternateAngle: 90,
         alternateLayerSpacing: 35,
-        alternateAlignment: go.TreeAlignment.Bus,
+        alternateAlignment: go.TreeLayout.AlignmentBottomRightBus,
         alternateNodeSpacing: 20,
       }),
+      "toolManager.hoverDelay": 100,
+      "undoManager.isEnabled": true,
+      linkTemplate: createLinkTemplate(onMouseEnterPart, onMouseLeavePart),
+      model: new go.TreeModel({ nodeKeyProperty: "key" }),
     });
 
-    diagram.themeManager.set("light", {
-      colors: {
-        background: "#fff",
-        text: "#111827",
-        textHighlight: "#11a8cd",
-        subtext: "#6b7280",
-        badge: "#f0fdf4",
-        badgeBorder: "#16a34a33",
-        badgeText: "#15803d",
-        divider: "#6b7280",
-        shadow: "#9ca3af",
-        tooltip: "#1f2937",
-        levels: [
-          "#AC193D",
-          "#2672EC",
-          "#8C0095",
-          "#5133AB",
-          "#008299",
-          "#D24726",
-          "#008A00",
-          "#094AB2",
-        ],
-        dragOver: "#f0f9ff",
-        link: "#9ca3af",
-        div: "#f3f4f6",
-      },
-      fonts: {
-        name: "500 0.875rem InterVariable, sans-serif",
-        normal: "0.875rem InterVariable, sans-serif",
-        badge: "500 0.75rem InterVariable, sans-serif",
-        link: "600 0.875rem InterVariable, sans-serif",
-      },
+    diagram.nodeTemplate = createNodeTemplate(
+      onMouseEnterPart,
+      onMouseLeavePart,
+      onSelectionChange,
+      strokeStyle
+    );
+    const nodes = people;
+    diagram.model.addNodeDataCollection(nodes);
+
+    // Initially center on root
+    diagram.addDiagramListener("InitialLayoutCompleted", () => {
+      const root = diagram.findNodeForKey(primaryClient.id);
+      if (!root) return;
+      diagram.scale = 0.6;
+      diagram.scrollToRect(root.actualBounds);
     });
 
-    diagram.themeManager.set("dark", {
-      colors: {
-        background: "#111827",
-        text: "#fff",
-        subtext: "#d1d5db",
-        badge: "#22c55e19",
-        badgeBorder: "#22c55e21",
-        badgeText: "#4ade80",
-        shadow: "#111827",
-        dragOver: "#082f49",
-        link: "#6b7280",
-        div: "#1f2937",
-      },
-    });
+    // Set zoom to fit button
+    document
+      .getElementById("zoomToFit")
+      ?.addEventListener("click", diagram.commandHandler.zoomToFit);
 
-    diagram.nodeTemplate = new go.Node(go.Panel.Spot, {
-      isShadowed: true,
-      shadowOffset: new go.Point(0, 2),
-      selectionObjectName: "BODY",
-      // mouseEnter: (e, node) => (node.findObject('BUTTON').opacity = node.findObject('BUTTONX').opacity = 1),
-      // mouseLeave: (e, node) => {
-      //     if (node.isSelected) return;
-      //     node.findObject('BUTTON').opacity = node.findObject('BUTTONX').opacity = 0;
-      // },
+    document.getElementById("centerRoot")?.addEventListener("click", () => {
+      const scrollTo = diagram.findNodeForKey(primaryClient.id);
+      if (scrollTo) {
+        diagram.scale = 1;
+        diagram.commandHandler.scrollToPart(scrollTo);
+      }
     });
 
     return diagram;
-  }
+  };
 
-  function refreshNodeIndex(nodeArr: go.ObjectData[]) {
-    mapNodeKeyIdx.clear();
-    nodeArr.forEach((n, idx) => {
-      mapNodeKeyIdx.set(n.key, idx);
-    });
-  }
+  const peopleNodeData = useMemo(
+    () =>
+      people.map((person) => ({
+        key: person.id,
+        text: person.name,
+        color: person.id === primaryClient.id ? "lightblue" : "lightgreen",
+      })),
+    [people, primaryClient.id]
+  );
 
-  function refreshLinkIndex(linkArr: go.ObjectData[]) {
-    mapLinkKeyIdx.clear();
-    linkArr.forEach((l, idx) => {
-      mapLinkKeyIdx.set(l.key, idx);
-    });
-  }
-
-  function handleModelChange(obj: go.IncrementalData) {
-    if (obj === null) return;
-
-    const insertedNodeKeys = obj.insertedNodeKeys;
-    const modifiedNodeData = obj.modifiedNodeData;
-    const removedNodeKeys = obj.removedNodeKeys;
-    const insertedLinkKeys = obj.insertedLinkKeys;
-    const modifiedLinkData = obj.modifiedLinkData;
-    const removedLinkKeys = obj.removedLinkKeys;
-
-    // copy data to new array, but maintain references
-    let nodeArr = nodeDataArray.slice();
-    let linkArr = linkDataArray.slice();
-    // maintain maps of modified data so insertions don't need slow lookups
-    const modifiedNodeMap = new Map();
-    const modifiedLinkMap = new Map();
-    // only update state if we've actually made a change
-    let arrChanged = false;
-
-    // handle node changes
-    if (modifiedNodeData) {
-      modifiedNodeData.forEach((nd) => {
-        modifiedNodeMap.set(nd.key, nd);
-        const idx = mapNodeKeyIdx.get(nd.key);
-        if (idx !== undefined && idx >= 0) {
-          nodeArr.splice(idx, 1, nd);
-          arrChanged = true;
-        }
-      });
-    }
-    if (insertedNodeKeys) {
-      insertedNodeKeys.forEach((key) => {
-        const nd = modifiedNodeMap.get(key);
-        const idx = mapNodeKeyIdx.get(key);
-        if (nd && idx === undefined) {
-          mapNodeKeyIdx.set(nd.key, nodeArr.length);
-          nodeArr.push(nd);
-          arrChanged = true;
-        }
-      });
-    }
-    if (removedNodeKeys) {
-      nodeArr = nodeArr.filter((nd) => {
-        if (removedNodeKeys.includes(nd.key)) {
-          arrChanged = true;
-          return false;
-        }
-        return true;
-      });
-      refreshNodeIndex(nodeArr);
-    }
-    // handle link changes
-    if (modifiedLinkData) {
-      modifiedLinkData.forEach((ld) => {
-        modifiedLinkMap.set(ld.key, ld);
-        const idx = mapLinkKeyIdx.get(ld.key);
-        if (idx !== undefined && idx >= 0) {
-          linkArr.splice(idx, 1, ld);
-          arrChanged = true;
-        }
-      });
-    }
-    if (insertedLinkKeys) {
-      insertedLinkKeys.forEach((key) => {
-        const ld = modifiedLinkMap.get(key);
-        const idx = mapLinkKeyIdx.get(key);
-        if (ld && idx === undefined) {
-          mapLinkKeyIdx.set(ld.key, linkArr.length);
-          linkArr.push(ld);
-          arrChanged = true;
-        }
-      });
-    }
-    if (removedLinkKeys) {
-      linkArr = linkArr.filter((ld) => {
-        if (removedLinkKeys.includes(ld.key)) {
-          arrChanged = true;
-          return false;
-        }
-        return true;
-      });
-      refreshLinkIndex(linkArr);
-    }
-
-    if (arrChanged) {
-      setNodeDataArray(nodeArr);
-      setLinkDataArray(linkArr);
-      setSkipsDiagramUpdate(true);
-    }
-  }
+  const peopleLinkData = useMemo(
+    () =>
+      people
+        .map(
+          (person) =>
+            [person.id, person.relationships] as [number, PersonRelationships]
+        )
+        .flatMap(([fromPid, relationships]: [number, PersonRelationships]) =>
+          Array.from(relationships.entries()).map(([toPid, _]) => ({
+            key: `${fromPid}-${toPid}`,
+            from: fromPid,
+            to: toPid,
+          }))
+        ),
+    [people]
+  );
 
   return (
-    <ReactDiagram
-      divClassName="diagram-component"
-      initDiagram={initDiagram}
-      nodeDataArray={nodeDataArray}
-      linkDataArray={linkDataArray}
-      skipsDiagramUpdate={skipsDiagramUpdate}
-      onModelChange={handleModelChange}
-    />
+    <div>
+      <ReactDiagram
+        divClassName="diagram-component"
+        initDiagram={initDiagram}
+        nodeDataArray={peopleNodeData}
+        linkDataArray={peopleLinkData}
+      />
+    </div>
   );
 }

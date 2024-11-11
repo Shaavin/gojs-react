@@ -27,7 +27,7 @@ export function generateRandomRelationship(): Relationship {
 export function buildRelationships(id: number): PersonRelationships {
   const otherPeople = Array.from({ length: NUM_PEOPLE })
     .map((_, i) => i)
-    .filter((i) => i !== id);
+    .filter((i) => i !== id && i !== 0); // 0 is reserved for the client
   const numRelationships = faker.number.int({
     min: 1,
     max: MAX_PERSONAL_RELATIONSHIPS,

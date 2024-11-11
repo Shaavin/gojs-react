@@ -10,7 +10,8 @@ people.forEach((person) => buildRelationships(person.id));
 export default function App() {
   return (
     <div>
-      <Genogram people={people} />
+      <h1 style={{ marginBottom: 24 }}>Go.js Genogram Example</h1>
+      <Genogram people={people} primaryClient={people[0]} />
     </div>
   );
 }
