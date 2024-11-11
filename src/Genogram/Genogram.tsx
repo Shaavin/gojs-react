@@ -62,19 +62,17 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
         angle: 90,
         nodeSpacing: 20,
         layerSpacing: 50,
-        layerStyle: go.TreeLayout.LayerUniform,
 
         // For compaction, make the last parents place their children in a bus
         treeStyle: go.TreeStyle.LastParents,
         alternateAngle: 90,
         alternateLayerSpacing: 35,
-        alternateAlignment: go.TreeLayout.AlignmentBottomRightBus,
         alternateNodeSpacing: 20,
       }),
       "toolManager.hoverDelay": 100,
       "undoManager.isEnabled": true,
       linkTemplate: createLinkTemplate(onMouseEnterPart, onMouseLeavePart),
-      model: new go.TreeModel({ nodeKeyProperty: "key" }),
+      model: new go.TreeModel({ nodeKeyProperty: "id" }),
     });
 
     diagram.nodeTemplate = createNodeTemplate(
@@ -113,7 +111,7 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
   const peopleNodeData = useMemo(
     () =>
       people.map((person) => ({
-        key: person.id,
+        id: person.id,
         text: person.name,
         color: person.id === primaryClient.id ? "lightblue" : "lightgreen",
       })),
@@ -129,7 +127,7 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
         )
         .flatMap(([fromPid, relationships]: [number, PersonRelationships]) =>
           Array.from(relationships.entries()).map(([toPid, _]) => ({
-            key: `${fromPid}-${toPid}`,
+            id: `${fromPid}-${toPid}`,
             from: fromPid,
             to: toPid,
           }))
@@ -138,13 +136,17 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
   );
 
   return (
-    <div>
-      <ReactDiagram
-        divClassName="diagram-component"
-        initDiagram={initDiagram}
-        nodeDataArray={peopleNodeData}
-        linkDataArray={peopleLinkData}
-      />
-    </div>
+    <ReactDiagram
+      divClassName="diagram-component"
+      initDiagram={initDiagram}
+      linkDataArray={peopleLinkData}
+      nodeDataArray={peopleNodeData}
+      style={{
+        marginLeft: "auto",
+        marginRight: "auto",
+        height: "80vh",
+        width: "96%",
+      }}
+    />
   );
 }

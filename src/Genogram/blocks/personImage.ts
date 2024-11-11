@@ -6,21 +6,21 @@ const pictureStyle = (pic: go.Picture) =>
   pic
     .bind(
       "source",
-      "",
+      "", // select entire object
       ({ status, gender }: { status: string; gender: Gender }) => {
         switch (status) {
           case "king":
           case "queen":
-            return "../../public/images/king.svg";
+            return "./images/king.svg";
           case "prince":
           case "princess":
-            return "../../public/images/prince.svg";
+            return "./images/prince.svg";
           case "civilian":
             return gender === "male"
-              ? "../../public/images/male-civilian.svg"
-              : "../../public/images/female-civilian.svg";
+              ? "./images/male-civilian.svg"
+              : "./images/female-civilian.svg";
           default:
-            return "../../public/images/male-civilian.svg";
+            return "./images/male-civilian.svg";
         }
       }
     )
