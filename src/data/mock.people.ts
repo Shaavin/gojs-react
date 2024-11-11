@@ -22,7 +22,7 @@ export function generatePerson(
     )} ${faker.person.lastName(gender === "other" ? undefined : gender)}`,
     relationships: buildRelationships(id),
     status: ["king", "queen", "prince", "princess", "civilian"][
-      faker.number.int({ min: 0, max: 1 })
+      faker.number.int({ min: 0, max: 4 })
     ],
   };
 }
