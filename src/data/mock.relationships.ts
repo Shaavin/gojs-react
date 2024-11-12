@@ -11,7 +11,7 @@ import {
   MAX_PERSONAL_RELATIONSHIPS,
   NUM_PEOPLE,
 } from "./constants";
-import takeN from "../utils/takeN";
+import shuffleAndTakeN from "../utils/shuffleAndTakeN";
 
 export function generateRandomRelationship(): Relationship {
   return {
@@ -23,10 +23,13 @@ export function generateRandomRelationship(): Relationship {
         })
       ],
     strength: faker.number.int({ min: 1, max: 100 }),
-    types: takeN(RelationshipTypeOptions as unknown as RelationshipType[], {
-      min: 1,
-      max: MAX_INTERPERSONAL_RELATIONSHIP_TYPES,
-    }),
+    types: shuffleAndTakeN(
+      RelationshipTypeOptions as unknown as RelationshipType[],
+      {
+        min: 1,
+        max: MAX_INTERPERSONAL_RELATIONSHIP_TYPES,
+      }
+    ),
   };
 }
 
@@ -38,7 +41,7 @@ export function buildRelationships(id: number): PersonRelationships {
     min: 1,
     max: MAX_PERSONAL_RELATIONSHIPS,
   });
-  const sampleRelatedPeople = takeN(otherPeople, numRelationships);
+  const sampleRelatedPeople = shuffleAndTakeN(otherPeople, numRelationships);
 
   return new Map(
     sampleRelatedPeople.map((id: number) => [id, generateRandomRelationship()])
