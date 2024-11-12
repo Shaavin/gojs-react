@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import createNodeTemplate from "./templates/createNodeTemplate";
 import createLinkTemplate from "./templates/createLinkTemplate";
 import { statusProperty, STROKE_WIDTH, theme } from "./constants";
+import "./Genogram.css";
 
 const getStrokeForStatus = (status: string) => {
   switch (status) {
@@ -37,14 +38,6 @@ const strokeStyle = (shape: go.Shape) =>
           ? theme.colors.selectionStroke
           : getStrokeForStatus(obj.part.data.status)
     );
-
-const buttonStyles = {
-  backgroundColor: "#027600",
-  border: 0,
-  borderRadius: 2,
-  color: "white",
-  padding: 8,
-};
 
 export interface GenogramProps {
   people: Person[];
@@ -134,31 +127,16 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
         modelData={people}
         linkDataArray={peopleLinkData}
         nodeDataArray={peopleNodeData}
-        style={{
-          marginLeft: "auto",
-          marginRight: "auto",
-          height: "74vh",
-          width: "96%",
-        }}
       />
-      <div
-        style={{
-          marginLeft: "auto",
-          marginRight: "auto",
-          marginTop: 16,
-          width: "96%",
-        }}
-      >
+      <div className="button-wrapper">
         <button
+          className="button button-left"
           onClick={() => diagram?.commandHandler?.zoomToFit?.()}
-          style={{
-            ...buttonStyles,
-            marginRight: 16,
-          }}
         >
           Zoom to fit
         </button>
         <button
+          className="button"
           onClick={() => {
             if (!diagram) return;
             const root = diagram.findNodeForKey(primaryClient.id);
@@ -166,7 +144,6 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
             diagram.scale = 0.6;
             diagram.scrollToRect(root.actualBounds);
           }}
-          style={buttonStyles}
         >
           Center on root
         </button>

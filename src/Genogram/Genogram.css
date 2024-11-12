@@ -1,0 +1,27 @@
+.diagram-component {
+  background-color: white;
+  border: solid 1px black;
+  margin-left: auto;
+  margin-right: auto;
+  height: 74vh;
+  width: 96%;
+}
+
+.button-wrapper {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 16px;
+  width: 96%;
+}
+
+.button {
+  background-color: #027600;
+  border: 0;
+  border-radius: 2px;
+  color: white;
+  padding: 8px;
+}
+
+.button-left {
+  margin-right: 16px;
+}
