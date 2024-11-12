@@ -14,6 +14,9 @@ export const theme = {
     defaultStroke: "#575757",
     selectionStroke: "#bdbdbd",
 
+    clientCardBackground: "#cf4040",
+    clientBadgeBackground: "#9c3030",
+
     femaleCardBackground: "#428552",
     femaleBadgeBackground: "#2e5c39",
 

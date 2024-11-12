@@ -28,7 +28,13 @@ const personImage = (strokeStyle: (shape: go.Shape) => go.Shape) =>
     new go.Shape({
       figure: "Circle",
       desiredSize: new go.Size(IMAGE_DIAMETER, IMAGE_DIAMETER),
-    }).apply(strokeStyle),
+    })
+      .apply(strokeStyle)
+      .bindObject("fill", "", (obj) =>
+        obj.part.data.id === 0
+          ? theme.colors.clientBadgeBackground
+          : obj.part.data.fill
+      ),
     new go.Picture({ scale: 0.9 }).apply(pictureStyle),
     new go.Shape("Circle", {
       desiredSize: new go.Size(IMAGE_DIAMETER, IMAGE_DIAMETER),

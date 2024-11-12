@@ -24,6 +24,11 @@ const strokeStyle = (mainCard: boolean) => (shape: go.Shape) =>
           : theme.colors.otherBadgeBackground;
       }
     })
+    .bindObject("fill", "", (obj) =>
+      obj.part.data.id === 0
+        ? theme.colors.clientCardBackground
+        : obj.part.data.fill
+    )
     .set({
       strokeWidth: STROKE_WIDTH,
     })
