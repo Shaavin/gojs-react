@@ -1,7 +1,7 @@
 import { ReactDiagram } from "gojs-react";
 import { Person, PersonRelationships } from "../data/types";
 import * as go from "gojs";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import createNodeTemplate from "./templates/createNodeTemplate";
 import createLinkTemplate from "./templates/createLinkTemplate";
 import { statusProperty, STROKE_WIDTH, theme } from "./constants";
@@ -38,12 +38,22 @@ const strokeStyle = (shape: go.Shape) =>
           : getStrokeForStatus(obj.part.data.status)
     );
 
+const buttonStyles = {
+  backgroundColor: "#027600",
+  border: 0,
+  borderRadius: 2,
+  color: "white",
+  padding: 8,
+};
+
 export interface GenogramProps {
   people: Person[];
   primaryClient: Person;
 }
 
 export default function Genogram({ people, primaryClient }: GenogramProps) {
+  const [diagram, setDiagram] = useState<go.Diagram>();
+
   const onMouseEnterPart = (_: unknown, part: go.ObjectData) =>
     (part.isHighlighted = true);
   const onMouseLeavePart = (_: unknown, part: go.ObjectData) => {
@@ -84,27 +94,9 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
     const nodes = people;
     diagram.model.addNodeDataCollection(nodes);
 
-    // Initially center on root
     diagram.scale = 0.6;
-    diagram.addDiagramListener("InitialLayoutCompleted", () => {
-      const root = diagram.findNodeForKey(primaryClient.id);
-      if (!root) return;
-      diagram.scrollToRect(root.actualBounds);
-    });
 
-    // Set zoom to fit button
-    document
-      .getElementById("zoomToFit")
-      ?.addEventListener("click", diagram.commandHandler.zoomToFit);
-
-    document.getElementById("centerRoot")?.addEventListener("click", () => {
-      const scrollTo = diagram.findNodeForKey(primaryClient.id);
-      if (scrollTo) {
-        diagram.scale = 1;
-        diagram.commandHandler.scrollToPart(scrollTo);
-      }
-    });
-
+    setDiagram(diagram);
     return diagram;
   };
 
@@ -135,18 +127,50 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
   );
 
   return (
-    <ReactDiagram
-      divClassName="diagram-component"
-      initDiagram={initDiagram}
-      modelData={people}
-      linkDataArray={peopleLinkData}
-      nodeDataArray={peopleNodeData}
-      style={{
-        marginLeft: "auto",
-        marginRight: "auto",
-        height: "80vh",
-        width: "96%",
-      }}
-    />
+    <>
+      <ReactDiagram
+        divClassName="diagram-component"
+        initDiagram={initDiagram}
+        modelData={people}
+        linkDataArray={peopleLinkData}
+        nodeDataArray={peopleNodeData}
+        style={{
+          marginLeft: "auto",
+          marginRight: "auto",
+          height: "74vh",
+          width: "96%",
+        }}
+      />
+      <div
+        style={{
+          marginLeft: "auto",
+          marginRight: "auto",
+          marginTop: 16,
+          width: "96%",
+        }}
+      >
+        <button
+          onClick={() => diagram?.commandHandler?.zoomToFit?.()}
+          style={{
+            ...buttonStyles,
+            marginRight: 16,
+          }}
+        >
+          Zoom to fit
+        </button>
+        <button
+          onClick={() => {
+            if (!diagram) return;
+            const root = diagram.findNodeForKey(primaryClient.id);
+            if (!root) return;
+            diagram.scale = 0.6;
+            diagram.scrollToRect(root.actualBounds);
+          }}
+          style={buttonStyles}
+        >
+          Center on root
+        </button>
+      </div>
+    </>
   );
 }
