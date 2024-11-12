@@ -1,4 +1,7 @@
-import getRandomInt from "./getRandomInt";
+import { faker } from "@faker-js/faker";
+
+// Ensure the correct type definition for faker.helpers.shuffle
+const shuffle: <T>(arr: T[]) => T[] = faker.helpers.shuffle;
 
 export default function shuffleAndTakeN<T>(
   arr: T[],
@@ -30,10 +33,9 @@ export default function shuffleAndTakeN<T>(
   if (typeof count === "number") {
     takeCount = count;
   } else {
-    takeCount = getRandomInt(count.min, count.max);
+    takeCount = faker.number.int({ min: count.min, max: count.max });
   }
 
-  const copy = [...arr];
-  const shuffled = copy.sort(() => 0.5 - Math.random());
+  const shuffled = shuffle(arr);
   return shuffled.slice(0, takeCount);
 }
