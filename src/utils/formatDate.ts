@@ -10,7 +10,7 @@ export default function formatDate(date?: Date | string): string {
     d = date;
   } else {
     throw new Error(
-      "Bad call to formatDate: param 'date' was not of type Date, string, or undefiend"
+      "Bad call to formatDate: param 'date' was not of type Date, string, or undefined"
     );
   }
 
