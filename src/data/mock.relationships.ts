@@ -35,7 +35,7 @@ export function buildRelationships(id: number): PersonRelationships {
     .map((_, i) => i)
     .filter((i) => i !== id && i !== 0); // 0 is reserved for the client
   const numRelationships = faker.number.int({
-    min: 0,
+    min: 1,
     max: MAX_PERSONAL_RELATIONSHIPS,
   });
   const sampleRelatedPeople = takeN(otherPeople, numRelationships);

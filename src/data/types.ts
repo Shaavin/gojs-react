@@ -13,6 +13,8 @@ export interface Person {
 
 export type PersonRelationships = Map<number, Relationship>;
 
+export type PersonWithParent = Person & { parent: number };
+
 export interface Relationship {
   status: RelationshipStatus;
   strength: number; // Range from 1 to 100

@@ -1,5 +1,5 @@
 import { ReactDiagram } from "gojs-react";
-import { Person, PersonRelationships } from "../data/types";
+import { Person, PersonWithParent } from "../data/types";
 import * as go from "gojs";
 import { useMemo, useState } from "react";
 import createNodeTemplate from "./templates/createNodeTemplate";
@@ -39,6 +39,12 @@ const strokeStyle = (shape: go.Shape) =>
           : getStrokeForStatus(obj.part.data.status)
     );
 
+const getParents = (people: Person[]): PersonWithParent[] =>
+  people.map((person) => ({
+    ...person,
+    parent: Array.from(person.relationships.keys())[0],
+  }));
+
 export interface GenogramProps {
   people: Person[];
   primaryClient: Person;
@@ -46,6 +52,8 @@ export interface GenogramProps {
 
 export default function Genogram({ people, primaryClient }: GenogramProps) {
   const [diagram, setDiagram] = useState<go.Diagram>();
+
+  const peopleWithAParent = useMemo(() => getParents(people), [people]);
 
   const onMouseEnterPart = (_: unknown, part: go.ObjectData) =>
     (part.isHighlighted = true);
@@ -61,6 +69,8 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
     go.Diagram.licenseKey = "INVALID";
 
     const diagram = new go.Diagram({
+      // Model & layout
+      model: new go.TreeModel({ nodeKeyProperty: "id" }),
       layout: new go.TreeLayout({
         angle: 90,
         nodeSpacing: 20,
@@ -72,61 +82,34 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
         alternateLayerSpacing: 35,
         alternateNodeSpacing: 20,
       }),
+
+      // Rendering logic & properties
+      nodeTemplate: createNodeTemplate(
+        onMouseEnterPart,
+        onMouseLeavePart,
+        onSelectionChange,
+        strokeStyle
+      ),
+      linkTemplate: createLinkTemplate(onMouseEnterPart, onMouseLeavePart),
+      scale: 0.6,
+
+      // Meta-behavior
       "toolManager.hoverDelay": 100,
       "undoManager.isEnabled": true,
-      linkTemplate: createLinkTemplate(onMouseEnterPart, onMouseLeavePart),
-      model: new go.TreeModel({ nodeKeyProperty: "id" }),
     });
 
-    diagram.nodeTemplate = createNodeTemplate(
-      onMouseEnterPart,
-      onMouseLeavePart,
-      onSelectionChange,
-      strokeStyle
-    );
-    const nodes = people;
-    diagram.model.addNodeDataCollection(nodes);
-
-    diagram.scale = 0.6;
+    diagram.model.addNodeDataCollection(peopleWithAParent);
 
     setDiagram(diagram);
     return diagram;
   };
-
-  const peopleNodeData = useMemo(
-    () =>
-      people.map((person) => ({
-        id: person.id,
-        text: person.name,
-      })),
-    [people]
-  );
-
-  const peopleLinkData = useMemo(
-    () =>
-      people
-        .map(
-          (person) =>
-            [person.id, person.relationships] as [number, PersonRelationships]
-        )
-        .flatMap(([fromPid, relationships]: [number, PersonRelationships]) =>
-          Array.from(relationships.entries()).map(([toPid, _]) => ({
-            id: `${fromPid}-${toPid}`,
-            from: fromPid,
-            to: toPid,
-          }))
-        ),
-    [people]
-  );
 
   return (
     <>
       <ReactDiagram
         divClassName="diagram-component"
         initDiagram={initDiagram}
-        modelData={people}
-        linkDataArray={peopleLinkData}
-        nodeDataArray={peopleNodeData}
+        nodeDataArray={peopleWithAParent}
       />
       <div className="button-wrapper">
         <button
