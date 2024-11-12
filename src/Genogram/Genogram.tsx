@@ -4,40 +4,17 @@ import * as go from "gojs";
 import { useMemo, useState } from "react";
 import createNodeTemplate from "./templates/createNodeTemplate";
 import createLinkTemplate from "./templates/createLinkTemplate";
-import { statusProperty, STROKE_WIDTH, theme } from "./constants";
 import "./Genogram.css";
 
-const getStrokeForStatus = (status: string) => {
-  switch (status) {
-    case "king":
-    case "queen":
-      return theme.colors.kingQueenBorder;
-    case "prince":
-    case "princess":
-      return theme.colors.princePrincessBorder;
-    case "civilian":
-    default:
-      return theme.colors.civilianBorder;
-  }
+// Event handlers
+const onMouseEnterPart = (_: unknown, part: go.ObjectData) =>
+  (part.isHighlighted = true);
+const onMouseLeavePart = (_: unknown, part: go.ObjectData) => {
+  if (!part.isSelected) part.isHighlighted = false;
 };
-
-const strokeStyle = (shape: go.Shape) =>
-  shape
-    .set({
-      fill: theme.colors.personNodeBackground,
-      strokeWidth: STROKE_WIDTH,
-    })
-    .bind("stroke", statusProperty, (status: string) =>
-      getStrokeForStatus(status)
-    )
-    .bindObject(
-      "stroke",
-      "isHighlighted",
-      (isHighlighted: boolean, obj: go.ObjectData) =>
-        isHighlighted
-          ? theme.colors.selectionStroke
-          : getStrokeForStatus(obj.part.data.status)
-    );
+const onSelectionChange = (part: go.ObjectData) => {
+  part.isHighlighted = part.isSelected;
+};
 
 const getParents = (people: Person[]): PersonWithParent[] =>
   people.map((person) => ({
@@ -54,15 +31,6 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
   const [diagram, setDiagram] = useState<go.Diagram>();
 
   const peopleWithAParent = useMemo(() => getParents(people), [people]);
-
-  const onMouseEnterPart = (_: unknown, part: go.ObjectData) =>
-    (part.isHighlighted = true);
-  const onMouseLeavePart = (_: unknown, part: go.ObjectData) => {
-    if (!part.isSelected) part.isHighlighted = false;
-  };
-  const onSelectionChange = (part: go.ObjectData) => {
-    part.isHighlighted = part.isSelected;
-  };
 
   const initDiagram = () => {
     // !TODO: Set license key
@@ -87,8 +55,7 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
       nodeTemplate: createNodeTemplate(
         onMouseEnterPart,
         onMouseLeavePart,
-        onSelectionChange,
-        strokeStyle
+        onSelectionChange
       ),
       linkTemplate: createLinkTemplate(onMouseEnterPart, onMouseLeavePart),
       scale: 0.6,
@@ -114,7 +81,7 @@ export default function Genogram({ people, primaryClient }: GenogramProps) {
       <div className="button-wrapper">
         <button
           className="button button-left"
-          onClick={() => diagram?.commandHandler?.zoomToFit?.()}
+          onClick={() => diagram?.commandHandler.zoomToFit()}
         >
           Zoom to fit
         </button>
