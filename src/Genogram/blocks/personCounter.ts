@@ -12,12 +12,15 @@ const personCounter = () =>
       new go.Shape("Circle", {
         desiredSize: new go.Size(29, 29),
         strokeWidth: STROKE_WIDTH,
-        stroke: theme.colors.counterBorder,
         fill: theme.colors.counterBackground,
-      }),
+      }).bindObject("stroke", "isHighlighted", (isHighlighted: boolean) =>
+        isHighlighted
+          ? theme.colors.selectionStroke
+          : theme.colors.defaultStroke
+      ),
       new go.TextBlock({
         alignment: new go.Spot(0.5, 0.5, 0, 1),
-        stroke: theme.colors.counterText,
+        stroke: theme.colors.textColor,
         font: theme.fonts.counterFont,
         textAlign: "center",
       }).bindObject("text", "", (obj) => obj.findNodesOutOf().count)

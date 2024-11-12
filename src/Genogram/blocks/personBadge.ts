@@ -7,21 +7,7 @@ import {
 } from "../constants";
 import { Gender } from "../../data/types";
 
-const genderToTextColor = (gender: Gender) =>
-  gender === "male"
-    ? theme.colors.maleBadgeText
-    : gender === "female"
-    ? theme.colors.femaleBadgeText
-    : theme.colors.otherBadgeText;
-
-const genderToFillColor = (gender: Gender) =>
-  gender === "male"
-    ? theme.colors.maleBadgeBackground
-    : gender === "female"
-    ? theme.colors.femaleBadgeBackground
-    : theme.colors.otherBadgeBackground;
-
-const personBadge = () =>
+const personBadge = (strokeStyle: (shape: go.Shape) => go.Shape) =>
   new go.Panel("Auto", {
     alignmentFocus: go.Spot.TopRight,
     alignment: new go.Spot(1, 0, -25, STROKE_WIDTH - 0.5),
@@ -31,15 +17,13 @@ const personBadge = () =>
       parameter1: CORNER_ROUNDNESS,
       parameter2: 4 | 8, // round only the bottom
       desiredSize: new go.Size(NaN, 22.5),
-      stroke: null,
-    }).bind("fill", genderProperty, genderToFillColor),
+    }).apply(strokeStyle),
     new go.TextBlock({
       font: theme.fonts.badgeFont,
-    })
-      .bind("stroke", genderProperty, genderToTextColor)
-      .bind("text", genderProperty, (gender: Gender) =>
-        gender.toLocaleUpperCase()
-      )
+      stroke: theme.colors.textColor,
+    }).bind("text", genderProperty, (gender: Gender) =>
+      gender.toLocaleUpperCase()
+    )
   );
 
 export default personBadge;

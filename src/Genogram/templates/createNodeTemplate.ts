@@ -5,38 +5,30 @@ import personBirthDeathTextBlock from "../blocks/personBirthDeathTextBlock";
 import personImage from "../blocks/personImage";
 import personBadge from "../blocks/personBadge";
 import personCounter from "../blocks/personCounter";
-import { statusProperty, STROKE_WIDTH, theme } from "../constants";
+import { genderProperty, STROKE_WIDTH, theme } from "../constants";
 
-const getStrokeForStatus = (status: string) => {
-  switch (status) {
-    case "king":
-    case "queen":
-      return theme.colors.kingQueenBorder;
-    case "prince":
-    case "princess":
-      return theme.colors.princePrincessBorder;
-    case "civilian":
-    default:
-      return theme.colors.civilianBorder;
-  }
-};
-
-const strokeStyle = (shape: go.Shape) =>
+const strokeStyle = (mainCard: boolean) => (shape: go.Shape) =>
   shape
+    .bind("fill", genderProperty, (gender) => {
+      if (mainCard) {
+        return gender === "male"
+          ? theme.colors.maleCardBackground
+          : gender === "female"
+          ? theme.colors.femaleCardBackground
+          : theme.colors.otherCardBackground;
+      } else {
+        return gender === "male"
+          ? theme.colors.maleBadgeBackground
+          : gender === "female"
+          ? theme.colors.femaleBadgeBackground
+          : theme.colors.otherBadgeBackground;
+      }
+    })
     .set({
-      fill: theme.colors.personNodeBackground,
       strokeWidth: STROKE_WIDTH,
     })
-    .bind("stroke", statusProperty, (status: string) =>
-      getStrokeForStatus(status)
-    )
-    .bindObject(
-      "stroke",
-      "isHighlighted",
-      (isHighlighted: boolean, obj: go.ObjectData) =>
-        isHighlighted
-          ? theme.colors.selectionStroke
-          : getStrokeForStatus(obj.part.data.status)
+    .bindObject("stroke", "isHighlighted", (isHighlighted: boolean) =>
+      isHighlighted ? theme.colors.selectionStroke : theme.colors.defaultStroke
     );
 
 const createNodeTemplate = (
@@ -51,12 +43,12 @@ const createNodeTemplate = (
     selectionChanged: onSelectionChange,
   }).add(
     new go.Panel("Spot").add(
-      personMainShape(strokeStyle),
+      personMainShape(strokeStyle(true)),
       personNameTextBlock(),
       personBirthDeathTextBlock()
     ),
-    personImage(strokeStyle),
-    personBadge(),
+    personImage(strokeStyle(false)),
+    personBadge(strokeStyle(false)),
     personCounter()
   );
 

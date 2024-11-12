@@ -1,43 +1,24 @@
 import * as go from "gojs";
-import { IMAGE_DIAMETER, IMAGE_TOP_MARGIN, STROKE_WIDTH } from "../constants";
+import {
+  IMAGE_DIAMETER,
+  IMAGE_TOP_MARGIN,
+  STROKE_WIDTH,
+  theme,
+} from "../constants";
 import { Gender } from "../../data/types";
 
 const pictureStyle = (pic: go.Picture) =>
   pic
-    .bind(
-      "source",
-      "", // select entire object
-      ({ status, gender }: { status: string; gender: Gender }) => {
-        switch (status) {
-          case "king":
-          case "queen":
-            return "./images/king.svg";
-          case "prince":
-          case "princess":
-            return "./images/prince.svg";
-          case "civilian":
-            return gender === "male"
-              ? "./images/male-civilian.svg"
-              : "./images/female-civilian.svg";
-          default:
-            return "./images/male-civilian.svg";
-        }
-      }
+    .bind("source", "gender", (gender: Gender) =>
+      gender === "male"
+        ? "/images/male.svg"
+        : gender === "female"
+        ? "/images/female.svg"
+        : Math.random() < 0.5
+        ? "/images/male.svg"
+        : "/images/female.svg"
     )
-    // The SVG files are different sizes, so this keeps their aspect ratio reasonable
-    .bind("desiredSize", "status", (status) => {
-      switch (status) {
-        case "king":
-        case "queen":
-          return new go.Size(30, 20);
-        case "prince":
-        case "princess":
-          return new go.Size(28, 20);
-        case "civilian":
-        default:
-          return new go.Size(24, 24);
-      }
-    });
+    .set({ desiredSize: new go.Size(24, 24) });
 
 const personImage = (strokeStyle: (shape: go.Shape) => go.Shape) =>
   new go.Panel("Spot", {
@@ -48,7 +29,14 @@ const personImage = (strokeStyle: (shape: go.Shape) => go.Shape) =>
       figure: "Circle",
       desiredSize: new go.Size(IMAGE_DIAMETER, IMAGE_DIAMETER),
     }).apply(strokeStyle),
-    new go.Picture({ scale: 0.9 }).apply(pictureStyle)
+    new go.Picture({ scale: 0.9 }).apply(pictureStyle),
+    new go.Shape("Circle", {
+      desiredSize: new go.Size(IMAGE_DIAMETER, IMAGE_DIAMETER),
+      strokeWidth: STROKE_WIDTH,
+      fill: "transparent",
+    }).bindObject("stroke", "isHighlighted", (isHighlighted: boolean) =>
+      isHighlighted ? theme.colors.selectionStroke : theme.colors.defaultStroke
+    )
   );
 
 export default personImage;
