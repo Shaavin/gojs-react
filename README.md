@@ -2,6 +2,8 @@
 
 This project provides a sample genogram implementation built with [Go.js](https://gojs.net/) and [React.js](https://reactjs.org/), written in TypeScript.
 
+For an overview of Go.js, you can reference my notes on how to integrate it into a React app [here](https://ian-penrod.notion.site/Go-js-13caae5d94b98072a69fe05ac0c957df?pvs=4).
+
 ## Prerequisites
 
 To run this project, ensure you have the following installed:
